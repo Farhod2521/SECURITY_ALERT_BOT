@@ -1,6 +1,6 @@
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 import psutil
 
@@ -18,7 +18,8 @@ SLEEP_SEC = float(os.environ.get("RESOURCE_WATCH_SLEEP_SEC", "1"))
 
 
 def now_ts():
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    tz = timezone(timedelta(hours=5))
+    return datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
 
 
 def main():

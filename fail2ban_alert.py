@@ -1,11 +1,12 @@
 import argparse
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 from telegram_alert import send_message, md_title, md_kv, hostname
 
 
 def now_ts():
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    tz = timezone(timedelta(hours=5))
+    return datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
 
 
 def main():
