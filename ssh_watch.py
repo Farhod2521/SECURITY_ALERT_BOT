@@ -98,11 +98,11 @@ def main():
                 if (ts - last) >= ALERT_COOLDOWN:
                     last_alert[ip] = ts
                     msg = "\n".join([
-                        md_title("🔐 SSH BRUTE FORCE ATTEMPT"),
-                        md_kv("👤", "User", user or "unknown"),
+                        md_title("🔐 SSH bruteforce urinish aniqlandi"),
+                        md_kv("👤", "Foydalanuvchi", user or "unknown"),
                         md_kv("🌍", "IP", ip),
-                        md_kv("⏰", "Time", now_ts()),
-                        md_kv("🖥", "Server", hostname()),
+                        md_kv("⏰", "Vaqt", now_ts()),
+                        md_kv("🖥️", "Server", hostname()),
                     ])
                     send_message(msg)
         time.sleep(SLEEP_SEC)

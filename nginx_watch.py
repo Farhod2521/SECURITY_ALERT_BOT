@@ -97,11 +97,11 @@ def main():
                 if (ts - last) >= FLOOD_COOLDOWN:
                     last_alert[ip] = ts
                     msg = "\n".join([
-                        md_title("🌊 API FLOOD DETECTED"),
+                        md_title("🌊 API so'rov oqimi (flood) aniqlandi"),
                         md_kv("🌍", "IP", ip),
-                        md_kv("📡", "Endpoint", last_path.get(ip, path)),
-                        md_kv("📈", "Requests/min", str(len(dq))),
-                        md_kv("🖥", "Server", hostname()),
+                        md_kv("🧭", "Yo'nalish", last_path.get(ip, path)),
+                        md_kv("📈", "So'rov/min", str(len(dq))),
+                        md_kv("🖥️", "Server", hostname()),
                     ])
                     send_message(msg)
         time.sleep(SLEEP_SEC)

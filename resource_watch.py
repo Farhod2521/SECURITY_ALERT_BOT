@@ -38,10 +38,10 @@ def main():
         if cpu_over_seconds >= CPU_DURATION_SEC and (now - last_cpu_alert) >= CPU_COOLDOWN_SEC:
             last_cpu_alert = now
             msg = "\n".join([
-                md_title("🔥 HIGH CPU USAGE"),
-                md_kv("📊", "CPU Load", f"{cpu:.1f}%"),
-                md_kv("⏰", "Duration", f"{CPU_DURATION_SEC}s+"),
-                md_kv("🖥", "Server", hostname()),
+                md_title("🔥 CPU yuklamasi yuqori"),
+                md_kv("🧠", "CPU yuklama", f"{cpu:.1f}%"),
+                md_kv("⏳", "Davomiylik", f"{CPU_DURATION_SEC}s+"),
+                md_kv("🖥️", "Server", hostname()),
             ])
             send_message(msg)
 
@@ -52,9 +52,9 @@ def main():
             if ram >= RAM_THRESHOLD and (now - last_ram_alert) >= RAM_COOLDOWN_SEC:
                 last_ram_alert = now
                 msg = "\n".join([
-                    md_title("💾 HIGH MEMORY USAGE"),
-                    md_kv("📊", "RAM Usage", f"{ram:.1f}%"),
-                    md_kv("🖥", "Server", hostname()),
+                    md_title("💾 Xotira (RAM) yuklamasi yuqori"),
+                    md_kv("💽", "RAM ishlatilishi", f"{ram:.1f}%"),
+                    md_kv("🖥️", "Server", hostname()),
                 ])
                 send_message(msg)
 

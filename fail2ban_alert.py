@@ -9,17 +9,17 @@ def now_ts():
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Send Fail2Ban ban alerts to Telegram")
-    parser.add_argument("--jail", required=True, help="Fail2Ban jail name")
-    parser.add_argument("--ip", required=True, help="Banned IP address")
+    parser = argparse.ArgumentParser(description="Fail2Ban ban ogohlantirishlarini Telegramga yuborish")
+    parser.add_argument("--jail", required=True, help="Fail2Ban jail nomi")
+    parser.add_argument("--ip", required=True, help="Bloklangan IP manzil")
     args = parser.parse_args()
 
     msg = "\n".join([
-        md_title("🚫 IP BLOCKED BY FAIL2BAN"),
-        md_kv("🧱", "Jail", args.jail),
+        md_title("🚫 Fail2Ban: IP bloklandi"),
+        md_kv("🧷", "Qamoq", args.jail),
         md_kv("🌍", "IP", args.ip),
-        md_kv("⏰", "Time", now_ts()),
-        md_kv("🖥", "Server", hostname()),
+        md_kv("⏰", "Vaqt", now_ts()),
+        md_kv("🖥️", "Server", hostname()),
     ])
     send_message(msg)
 

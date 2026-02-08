@@ -61,7 +61,9 @@ def send_message(message, retries=3, timeout=10):
 
 
 def md_kv(icon, label, value):
-    return f"{icon} {label}: {_escape_md_v2(value)}"
+    if icon:
+        return f"{icon} {label}: {_escape_md_v2(value)}"
+    return f"{label}: {_escape_md_v2(value)}"
 
 
 def md_title(text):
