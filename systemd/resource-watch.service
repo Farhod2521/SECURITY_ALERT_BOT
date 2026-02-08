@@ -1,0 +1,14 @@
+[Unit]
+Description=Security Bot Resource Watcher
+After=network.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/security-bot.env
+WorkingDirectory=/opt/security-bot
+ExecStart=/usr/bin/python3 /opt/security-bot/resource_watch.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

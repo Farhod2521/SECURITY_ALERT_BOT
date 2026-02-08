@@ -1,0 +1,14 @@
+[Unit]
+Description=Security Bot Nginx API Flood Watcher
+After=network.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/security-bot.env
+WorkingDirectory=/opt/security-bot
+ExecStart=/usr/bin/python3 /opt/security-bot/nginx_watch.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
