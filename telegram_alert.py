@@ -1,12 +1,17 @@
 import os
+import re
 import socket
 import time
+
 import requests
 
 
 BOT_TOKEN_ENV = "TELEGRAM_BOT_TOKEN"
 CHAT_ID_ENV = "TELEGRAM_CHAT_ID"
 ENV_FILE_NAME = ".env"
+
+_CUSTOM_EMOJI_TOKEN_RE = re.compile(r"\[\[CE:(\d+)\|([^\]]*)\]\]")
+_CUSTOM_EMOJI_BASE_CACHE = {}
 
 
 def _load_env_file(path):
@@ -37,20 +42,91 @@ def _load_env():
     _load_env_file(os.path.join(here, ENV_FILE_NAME))
 
 
-def _escape_md_v2(text):
-    # Telegram MarkdownV2 special chars must be escaped
-    # See: _*[]()~`>#+-=|{}.! 
+def _utf16_len(text):
     if text is None:
-        return ""
-    text = str(text)
-    escape_chars = r"_*[]()~`>#+-=|{}.!\\"
-    out = []
-    for ch in text:
-        if ch in escape_chars:
-            out.append("\\" + ch)
+        return 0
+    return len(str(text).encode("utf-16-le")) // 2
+
+
+def _fetch_custom_emoji_bases(token, emoji_ids, timeout=10):
+    if not emoji_ids:
+        return {}
+    url = f"https://api.telegram.org/bot{token}/getCustomEmojiStickers"
+    try:
+        resp = requests.post(url, json={"custom_emoji_ids": emoji_ids}, timeout=timeout)
+        if resp.status_code != 200:
+            return {}
+        data = resp.json()
+    except Exception:
+        return {}
+
+    if not data.get("ok"):
+        return {}
+
+    out = {}
+    for item in data.get("result", []):
+        emoji_id = str(item.get("custom_emoji_id", "")).strip()
+        base_emoji = item.get("emoji")
+        if emoji_id and base_emoji:
+            out[emoji_id] = str(base_emoji)
+    return out
+
+
+def _render_custom_emojis(message, token, timeout=10):
+    text = "" if message is None else str(message)
+    matches = list(_CUSTOM_EMOJI_TOKEN_RE.finditer(text))
+    if not matches:
+        return text, None
+
+    missing = []
+    for m in matches:
+        emoji_id = m.group(1)
+        if emoji_id not in _CUSTOM_EMOJI_BASE_CACHE:
+            missing.append(emoji_id)
+
+    if missing:
+        fresh = _fetch_custom_emoji_bases(token, sorted(set(missing)), timeout=timeout)
+        _CUSTOM_EMOJI_BASE_CACHE.update(fresh)
+
+    out_parts = []
+    entities = []
+    last = 0
+    offset = 0
+
+    for m in matches:
+        prefix = text[last : m.start()]
+        out_parts.append(prefix)
+        offset += _utf16_len(prefix)
+
+        emoji_id = m.group(1)
+        fallback = m.group(2)
+        base_emoji = _CUSTOM_EMOJI_BASE_CACHE.get(emoji_id)
+
+        if base_emoji:
+            out_parts.append(base_emoji)
+            length = _utf16_len(base_emoji)
+            entities.append(
+                {
+                    "offset": offset,
+                    "length": length,
+                    "type": "custom_emoji",
+                    "custom_emoji_id": emoji_id,
+                }
+            )
+            offset += length
         else:
-            out.append(ch)
-    return "".join(out)
+            out_parts.append(fallback)
+            offset += _utf16_len(fallback)
+
+        last = m.end()
+
+    tail = text[last:]
+    out_parts.append(tail)
+    rendered = "".join(out_parts)
+
+    if not entities:
+        return rendered, None
+    return rendered, entities
 
 
 def hostname():
@@ -76,6 +152,7 @@ def send_message(message, retries=3, timeout=10):
     if not token or not chat_ids:
         raise RuntimeError("TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is not set")
 
+    rendered_message, entities = _render_custom_emojis(message, token, timeout=timeout)
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     last_err = None
     for _ in range(retries):
@@ -84,11 +161,12 @@ def send_message(message, retries=3, timeout=10):
             for chat_id in chat_ids:
                 payload = {
                     "chat_id": chat_id,
-                    "text": message,
-                    "parse_mode": "MarkdownV2",
+                    "text": rendered_message,
                     "disable_web_page_preview": True,
                 }
-                resp = requests.post(url, data=payload, timeout=timeout)
+                if entities:
+                    payload["entities"] = entities
+                resp = requests.post(url, json=payload, timeout=timeout)
                 if resp.status_code != 200:
                     ok = False
                     last_err = RuntimeError(f"Telegram API error: {resp.status_code} {resp.text}")
@@ -104,24 +182,25 @@ def send_message(message, retries=3, timeout=10):
 
 def md_kv(icon, label, value):
     if icon:
-        return f"{icon} {label}: {_escape_md_v2(value)}"
-    return f"{label}: {_escape_md_v2(value)}"
+        return f"{icon} {label}: {'' if value is None else str(value)}"
+    return f"{label}: {'' if value is None else str(value)}"
 
 
 def md_title(text):
-    return f"*{_escape_md_v2(text)}*"
+    return "" if text is None else str(text)
 
 
 def md(text):
-    return _escape_md_v2(text)
+    return "" if text is None else str(text)
 
 
 def md_custom_emoji(emoji_id, fallback=""):
     emoji_id = "" if emoji_id is None else str(emoji_id).strip()
+    clean_fallback = "" if fallback is None else str(fallback)
+    clean_fallback = clean_fallback.replace("|", "").replace("]", "")
     if emoji_id:
-        # Telegram MarkdownV2 custom emoji format.
-        return f"![](tg://emoji?id={emoji_id})"
-    return fallback or ""
+        return f"[[CE:{emoji_id}|{clean_fallback}]]"
+    return clean_fallback
 
 
 def md_icon(name, fallback=""):
@@ -131,7 +210,7 @@ def md_icon(name, fallback=""):
 
 
 def md_title_icon(icon, text):
-    clean_text = _escape_md_v2(text)
+    clean_text = "" if text is None else str(text)
     if icon:
-        return f"{icon} *{clean_text}*"
-    return f"*{clean_text}*"
+        return f"{icon} {clean_text}"
+    return clean_text
