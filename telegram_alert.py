@@ -114,3 +114,24 @@ def md_title(text):
 
 def md(text):
     return _escape_md_v2(text)
+
+
+def md_custom_emoji(emoji_id, fallback=""):
+    emoji_id = "" if emoji_id is None else str(emoji_id).strip()
+    if emoji_id:
+        # Telegram MarkdownV2 custom emoji format.
+        return f"![](tg://emoji?id={emoji_id})"
+    return fallback or ""
+
+
+def md_icon(name, fallback=""):
+    _load_env()
+    env_name = f"TG_EMOJI_{str(name).strip().upper()}_ID"
+    return md_custom_emoji(os.environ.get(env_name), fallback=fallback)
+
+
+def md_title_icon(icon, text):
+    clean_text = _escape_md_v2(text)
+    if icon:
+        return f"{icon} *{clean_text}*"
+    return f"*{clean_text}*"

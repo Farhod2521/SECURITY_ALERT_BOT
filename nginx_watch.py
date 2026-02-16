@@ -2,9 +2,9 @@ import os
 import re
 import time
 from collections import deque, defaultdict
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
-from telegram_alert import send_message, md_title, md_kv, hostname, md
+from telegram_alert import send_message, md_kv, md_icon, md_title_icon, hostname
 
 
 NGINX_ACCESS_LOG = os.environ.get("NGINX_ACCESS_LOG", "/var/log/nginx/access.log")
@@ -97,13 +97,18 @@ def main():
                 last = last_alert.get(ip, 0)
                 if (ts - last) >= FLOOD_COOLDOWN:
                     last_alert[ip] = ts
-                    msg = "\n".join([
-                        md_title("🌊 API so'rov oqimi (flood) aniqlandi"),
-                        md_kv("🌍", "IP", ip),
-                        md_kv("🧭", "Yo'nalish", last_path.get(ip, path)),
-                        md_kv("📈", "So'rov/min", str(len(dq))),
-                        md_kv("🖥️", "Server", hostname()),
-                    ])
+                    msg = "\n".join(
+                        [
+                            md_title_icon(
+                                md_icon("API_FLOOD_TITLE", "🌊"),
+                                "API so'rov oqimi (flood) aniqlandi",
+                            ),
+                            md_kv(md_icon("IP", "🌍"), "IP", ip),
+                            md_kv(md_icon("ROUTE", "🧭"), "Yo'nalish", last_path.get(ip, path)),
+                            md_kv(md_icon("RATE", "📈"), "So'rov/min", str(len(dq))),
+                            md_kv(md_icon("SERVER", "🖥️"), "Server", hostname()),
+                        ]
+                    )
                     send_message(msg)
         time.sleep(SLEEP_SEC)
 

@@ -2,9 +2,9 @@ import os
 import re
 import time
 from collections import deque, defaultdict
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
-from telegram_alert import send_message, md_title, md_kv, hostname, md
+from telegram_alert import send_message, md_kv, md_icon, md_title_icon, hostname
 
 
 AUTH_LOG = os.environ.get("AUTH_LOG", "/var/log/auth.log")
@@ -17,9 +17,7 @@ SLEEP_SEC = float(os.environ.get("SSH_TAIL_SLEEP_SEC", "0.5"))
 FAILED_RE = re.compile(
     r"(Failed password for (?P<invalid>invalid user )?(?P<user>\S+) from (?P<ip>\S+))"
 )
-INVALID_RE = re.compile(
-    r"(Invalid user (?P<user>\S+) from (?P<ip>\S+))"
-)
+INVALID_RE = re.compile(r"(Invalid user (?P<user>\S+) from (?P<ip>\S+))")
 
 
 class FileTailer:
@@ -98,13 +96,18 @@ def main():
                 last = last_alert.get(ip, 0)
                 if (ts - last) >= ALERT_COOLDOWN:
                     last_alert[ip] = ts
-                    msg = "\n".join([
-                        md_title("🔐 SSH bruteforce urinish aniqlandi"),
-                        md_kv("👤", "Foydalanuvchi", user or "unknown"),
-                        md_kv("🌍", "IP", ip),
-                        md_kv("⏰", "Vaqt", now_ts()),
-                        md_kv("🖥️", "Server", hostname()),
-                    ])
+                    msg = "\n".join(
+                        [
+                            md_title_icon(
+                                md_icon("SSH_TITLE", "🔐"),
+                                "SSH bruteforce urinish aniqlandi",
+                            ),
+                            md_kv(md_icon("USER", "👤"), "Foydalanuvchi", user or "unknown"),
+                            md_kv(md_icon("IP", "🌍"), "IP", ip),
+                            md_kv(md_icon("TIME", "⏰"), "Vaqt", now_ts()),
+                            md_kv(md_icon("SERVER", "🖥️"), "Server", hostname()),
+                        ]
+                    )
                     send_message(msg)
         time.sleep(SLEEP_SEC)
 

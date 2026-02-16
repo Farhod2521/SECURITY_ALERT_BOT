@@ -1,10 +1,10 @@
 import os
 import time
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 import psutil
 
-from telegram_alert import send_message, md_title, md_kv, hostname
+from telegram_alert import send_message, md_kv, md_icon, md_title_icon, hostname
 
 
 CPU_THRESHOLD = float(os.environ.get("CPU_THRESHOLD", "60"))
@@ -38,12 +38,14 @@ def main():
         now = time.time()
         if cpu_over_seconds >= CPU_DURATION_SEC and (now - last_cpu_alert) >= CPU_COOLDOWN_SEC:
             last_cpu_alert = now
-            msg = "\n".join([
-                md_title("🔥 CPU yuklamasi yuqori"),
-                md_kv("🧠", "CPU yuklama", f"{cpu:.1f}%"),
-                md_kv("⏳", "Davomiylik", f"{CPU_DURATION_SEC}s+"),
-                md_kv("🖥️", "Server", hostname()),
-            ])
+            msg = "\n".join(
+                [
+                    md_title_icon(md_icon("CPU_TITLE", "🔥"), "CPU yuklamasi yuqori"),
+                    md_kv(md_icon("CPU", "🧠"), "CPU yuklama", f"{cpu:.1f}%"),
+                    md_kv(md_icon("DURATION", "⏳"), "Davomiylik", f"{CPU_DURATION_SEC}s+"),
+                    md_kv(md_icon("SERVER", "🖥️"), "Server", hostname()),
+                ]
+            )
             send_message(msg)
 
         ram_check_counter += 1
@@ -52,11 +54,13 @@ def main():
             ram = psutil.virtual_memory().percent
             if ram >= RAM_THRESHOLD and (now - last_ram_alert) >= RAM_COOLDOWN_SEC:
                 last_ram_alert = now
-                msg = "\n".join([
-                    md_title("💾 Xotira (RAM) yuklamasi yuqori"),
-                    md_kv("💽", "RAM ishlatilishi", f"{ram:.1f}%"),
-                    md_kv("🖥️", "Server", hostname()),
-                ])
+                msg = "\n".join(
+                    [
+                        md_title_icon(md_icon("RAM_TITLE", "💾"), "Xotira (RAM) yuklamasi yuqori"),
+                        md_kv(md_icon("RAM", "💽"), "RAM ishlatilishi", f"{ram:.1f}%"),
+                        md_kv(md_icon("SERVER", "🖥️"), "Server", hostname()),
+                    ]
+                )
                 send_message(msg)
 
         time.sleep(SLEEP_SEC)

@@ -1,7 +1,7 @@
 import argparse
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
-from telegram_alert import send_message, md_title, md_kv, hostname
+from telegram_alert import send_message, md_kv, md_icon, md_title_icon, hostname
 
 
 def now_ts():
@@ -15,13 +15,15 @@ def main():
     parser.add_argument("--ip", required=True, help="Bloklangan IP manzil")
     args = parser.parse_args()
 
-    msg = "\n".join([
-        md_title("🚫 Fail2Ban: IP bloklandi"),
-        md_kv("🧷", "Qamoq", args.jail),
-        md_kv("🌍", "IP", args.ip),
-        md_kv("⏰", "Vaqt", now_ts()),
-        md_kv("🖥️", "Server", hostname()),
-    ])
+    msg = "\n".join(
+        [
+            md_title_icon(md_icon("FAIL2BAN_TITLE", "🚫"), "Fail2Ban: IP bloklandi"),
+            md_kv(md_icon("JAIL", "🧷"), "Qamoq", args.jail),
+            md_kv(md_icon("IP", "🌍"), "IP", args.ip),
+            md_kv(md_icon("TIME", "⏰"), "Vaqt", now_ts()),
+            md_kv(md_icon("SERVER", "🖥️"), "Server", hostname()),
+        ]
+    )
     send_message(msg)
 
 
